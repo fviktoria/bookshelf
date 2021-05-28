@@ -801,7 +801,6 @@ function author() {
         'description'           => __( 'Author', 'vikal' ),
         'labels'                => $labels,
         'supports'              => array( 'title', 'thumbnail' ),
-        'taxonomies'            => array( 'category', 'post_tag' ),
         'hierarchical'          => false,
         'public'                => true,
         'show_ui'               => true,
