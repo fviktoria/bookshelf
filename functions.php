@@ -816,7 +816,7 @@ function author()
         'featured_image' => __('Author Portrait', 'vikal'),
         'set_featured_image' => __('Set Author Portrait', 'vikal'),
         'remove_featured_image' => __('Remove Author Portrait', 'vikal'),
-        'use_featured_image' => __('Use as Author Portrait', 'vikal'),ﬂ
+        'use_featured_image' => __('Use as Author Portrait', 'vikal'),
         'insert_into_item' => __('Insert into Author', 'vikal'),
         'uploaded_to_this_item' => __('Uploaded to this Author', 'vikal'),
         'items_list' => __('Author list', 'vikal'),
