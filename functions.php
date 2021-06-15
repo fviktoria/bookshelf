@@ -875,7 +875,8 @@ function get_books($request = null)
     $args = array(
         'post_type' => 'book',
         'paged' => $params['page'] ?: 1,
-        'posts_per_page' => $params['per_page'] ?: 10
+        'posts_per_page' => $params['per_page'] ?: 10,
+        'meta_key' => '_thumbnail_id'
     );
 
     if ($params['genres']) {
@@ -889,16 +890,28 @@ function get_books($request = null)
         );
     }
 
-    $books_temp = new WP_Query($args);
-    $books = array();
-
-    foreach ($books_temp->posts as $book) {
-        $acf = get_fields($book);
-        $book->acf = $acf;
-        array_push($books, $book);
+    if ($params['include']) {
+        $args['post__in'] = $params['include'];
     }
 
-    return $books_temp->posts;
+    $books = new WP_Query($args);
+
+    foreach ($books->posts as $book) {
+        $acf = get_fields($book);
+        $book->acf = $acf;
+
+        $thumb_id = get_post_thumbnail_id($book);
+        $thumb_url_array = wp_get_attachment_image_src($thumb_id, 'thumbnail-size', true);
+        $thumb_url = $thumb_url_array[0];
+        $book->featured_image_url = $thumb_url;
+    }
+
+    $response = new WP_REST_Response($books->posts, 200);
+
+    $response->header( 'X-WP-Total', $books->found_posts ); // total = total number of post
+    $response->header( 'X-WP-TotalPages', $books->max_num_pages); // maximum number of pages
+
+    return $response;
 }
 
 function register_user($request = null)
