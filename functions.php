@@ -722,7 +722,8 @@ function create_book_taxonomies()
             ),
             'show_ui' => true,
             'show_tagcloud' => false,
-            'hierarchical' => true
+            'hierarchical' => true,
+            'show_in_rest' => true
         )
     );
 }
@@ -860,7 +861,45 @@ add_action('rest_api_init', function () {
         "methods" => "POST",
         "callback" => "lost_password"
     ));
+
+    register_rest_route("bookshelf", "books", array(
+        "methods" => "POST",
+        "callback" => "get_books"
+    ));
 });
+
+function get_books($request = null)
+{
+    $params = $request->get_json_params();
+
+    $args = array(
+        'post_type' => 'book',
+        'paged' => $params['page'] ?: 1,
+        'posts_per_page' => $params['per_page'] ?: 10
+    );
+
+    if ($params['genres']) {
+        $args['tax_query'] = array(
+            'relation' => 'OR',
+            array(
+                'taxonomy' => 'book_genre',
+                'field' => 'term_id',
+                'terms' => $params['genres']
+            )
+        );
+    }
+
+    $books_temp = new WP_Query($args);
+    $books = array();
+
+    foreach ($books_temp->posts as $book) {
+        $acf = get_fields($book);
+        $book->acf = $acf;
+        array_push($books, $book);
+    }
+
+    return $books_temp->posts;
+}
 
 function register_user($request = null)
 {
