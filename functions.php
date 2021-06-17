@@ -687,7 +687,7 @@ function book()
         'label' => __('Book', 'vikal'),
         'description' => __('Book', 'vikal'),
         'labels' => $labels,
-        'supports' => array('title', 'thumbnail'),
+        'supports' => array('title', 'thumbnail', 'comments'),
         'hierarchical' => false,
         'public' => true,
         'show_ui' => true,
@@ -863,14 +863,24 @@ add_action('rest_api_init', function () {
     ));
 
     register_rest_route("bookshelf", "books", array(
-        "methods" => "POST",
+        "methods" => "GET",
         "callback" => "get_books"
+    ));
+
+    register_rest_route("bookshelf", "books/genres", array(
+        "methods" => "GET",
+        "callback" => "get_book_genres"
     ));
 });
 
+function get_book_genres() {
+    $response = new WP_REST_Response(get_terms('book_genre'), 200);
+    return $response;
+}
+
 function get_books($request = null)
 {
-    $params = $request->get_json_params();
+    $params = $request->get_query_params();
 
     $args = array(
         'post_type' => 'book',
@@ -885,25 +895,35 @@ function get_books($request = null)
             array(
                 'taxonomy' => 'book_genre',
                 'field' => 'term_id',
-                'terms' => $params['genres']
+                'terms' => array_map('intval', explode(',', $params['genres']))
             )
         );
     }
 
     if ($params['include']) {
-        $args['post__in'] = $params['include'];
+        $args['post__in'] = array_map('intval', explode(',', $params['include']));
     }
 
     $books = new WP_Query($args);
 
     foreach ($books->posts as $book) {
+        // add ACF fields
         $acf = get_fields($book);
         $book->acf = $acf;
 
+        // add featured image url
         $thumb_id = get_post_thumbnail_id($book);
         $thumb_url_array = wp_get_attachment_image_src($thumb_id, 'thumbnail-size', true);
         $thumb_url = $thumb_url_array[0];
         $book->featured_image_url = $thumb_url;
+
+        // add comments
+        /*$comments = get_comments( array(
+            'post_id' => $book->ID,
+            'orderby' => 'comment_date_gmt',
+            'status' => 'approve',
+        ) );
+        $book->comments = $comments;*/
     }
 
     $response = new WP_REST_Response($books->posts, 200);
