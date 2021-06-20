@@ -886,7 +886,6 @@ function get_books($request = null)
         'post_type' => 'book',
         'paged' => $params['page'] ?: 1,
         'posts_per_page' => $params['per_page'] ?: 10,
-        'meta_key' => '_thumbnail_id'
     );
 
     if ($params['genres']) {
@@ -898,6 +897,15 @@ function get_books($request = null)
                 'terms' => array_map('intval', explode(',', $params['genres']))
             )
         );
+    }
+
+    if ($params['orderby']) {
+        $args['orderby'] = $params['orderby'];
+        $args['order'] = 'ASC';
+    }
+
+    if ($params['order']) {
+        $args['order'] = $params['order'];
     }
 
     if ($params['include']) {
@@ -912,10 +920,12 @@ function get_books($request = null)
         $book->acf = $acf;
 
         // add featured image url
-        $thumb_id = get_post_thumbnail_id($book);
-        $thumb_url_array = wp_get_attachment_image_src($thumb_id, 'thumbnail-size', true);
-        $thumb_url = $thumb_url_array[0];
-        $book->featured_image_url = $thumb_url;
+        if (get_post_thumbnail_id($book)) {
+            $thumb_id = get_post_thumbnail_id($book);
+            $thumb_url_array = wp_get_attachment_image_src($thumb_id, 'thumbnail-size', true);
+            $thumb_url = $thumb_url_array[0];
+            $book->featured_image_url = $thumb_url;
+        }
 
         // add comments
         /*$comments = get_comments( array(
