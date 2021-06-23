@@ -871,6 +871,11 @@ add_action('rest_api_init', function () {
         "methods" => "GET",
         "callback" => "get_book_genres"
     ));
+
+    register_rest_route("bookshelf", "addBook", array(
+        "methods" => "POST",
+        "callback" => "add_to_bookshelf"
+    ));
 });
 
 function get_book_genres() {
@@ -942,6 +947,17 @@ function get_books($request = null)
     $response->header( 'X-WP-TotalPages', $books->max_num_pages); // maximum number of pages
 
     return $response;
+}
+
+function add_to_bookshelf($request = null) {
+    $params = $request->get_json_params();
+    $books = get_field('field_60c60a5352d8a', $params["user"]);
+    if (!in_array($params["book"], $books)) {
+        $books[] = $params["book"];
+        update_field('field_60c60a5352d8a', $books, $params["user"]);
+    }
+
+    return new WP_REST_RESPONSE($request, 200);
 }
 
 function register_user($request = null)
